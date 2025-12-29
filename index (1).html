@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الكافيه - POS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2c5f2d;
+            --primary-dark: #1a3a1b;
+            --secondary: #ff6b35;
+            --success: #97cc04;
+            --danger: #e63946;
+            --warning: #ffa500;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --border: #e0e0e0;
+            --shadow: rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px var(--shadow);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 2em;
+            font-weight: 900;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .cash-display {
+            background: linear-gradient(135deg, var(--success), var(--primary));
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 1.2em;
+        }
+
+        .user-display {
+            background: rgba(44, 95, 45, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px var(--shadow);
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 25px;
+            background: var(--light);
+            border: none;
+            border-radius: 15px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px var(--shadow);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .tables-slider {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 5px;
+            scroll-behavior: smooth;
+        }
+
+        .tables-slider::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .tables-slider::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        .tables-slider::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .table-item, .menu-item {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-width: 140px;
+            flex-shrink: 0;
+        }
+
+        .table-item:hover, .menu-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px var(--shadow);
+        }
+
+        .table-item.selected {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-color: var(--primary-dark);
+        }
+        
+        .table-item.occupied {
+            background: #ffe6e6;
+            border-color: var(--danger);
+            opacity: 0.8;
+        }
+        
+        .table-item.occupied:hover {
+            border-color: var(--danger);
+            transform: none;
+            cursor: default;
+        }
+
+        .menu-item.selected {
+            background: linear-gradient(135deg, var(--success), var(--primary));
+            color: white;
+            border-color: var(--success);
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(151, 204, 4, 0.4);
+        }
+
+        .menu-item.selected .item-price {
+            color: white;
+        }
+
+        .item-name {
+            font-weight: 700;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+        }
+
+        .item-price {
+            font-size: 1.3em;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .table-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-available {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-occupied {
+            background: var(--danger);
+            color: white;
+        }
+
+        .order-summary {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+
+        .order-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .qty-display {
+            font-weight: 700;
+            font-size: 1.2em;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .total-section {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .total-final {
+            font-size: 1.8em;
+            font-weight: 900;
+            padding-top: 15px;
+            border-top: 3px solid white;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px var(--shadow);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #7da903);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #c41e3a);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #ff8c00);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: right;
+        }
+
+        tbody td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex !important;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            float: left;
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--danger);
+            cursor: pointer;
+        }
+
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            .modal-content, .modal-content * { visibility: visible; }
+            .modal-content {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 80mm;
+            }
+            .close-modal, .print-button { display: none !important; }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5em; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen" style="display: none;">
+        <div class="login-card">
+            <div style="font-size: 4em; margin-bottom: 20px;">👤</div>
+            <h2 style="color: var(--primary); margin-bottom: 30px;">تسجيل الدخول</h2>
+            
+            <div class="form-group" style="text-align: right;">
+                <label>اختر المستخدم</label>
+                <select class="form-control" id="loginUser" style="font-size: 1.1em; padding: 15px;">
+                    <option value="">-- اختر --</option>
+                    <option value="admin">👨‍💼 المدير (صلاحيات كاملة)</option>
+                    <option value="employee">👨‍🍳 موظف (صلاحيات محدودة)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="employeeSelectGroup" style="display: none; text-align: right;">
+                <label>اختر الموظف</label>
+                <select class="form-control" id="employeeSelect" style="font-size: 1.1em; padding: 15px;">
+                    <option value="">-- اختر الموظف --</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="text-align: right;">
+                <label>كلمة المرور</label>
+                <input type="password" class="form-control" id="loginPassword" placeholder="أدخل كلمة المرور" style="font-size: 1.1em; padding: 15px;">
+                <small style="color: #666; margin-top: 5px; display: block;">كلمة المرور الافتراضية: 1234</small>
+            </div>
+
+            <button class="btn btn-success" onclick="performLogin()" style="width: 100%; font-size: 1.3em; padding: 15px; margin-top: 20px;">
+                🔓 دخول
+            </button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <div class="header">
+            <h1>☕ نظام إدارة الكافيه</h1>
+            <div class="header-right">
+                <div class="user-display" id="userDisplay">مستخدم</div>
+                <div class="cash-display">
+                    الخزنة: <span id="totalCash">0.00</span> ج
+                </div>
+                <button class="btn btn-danger" onclick="logout()" style="padding: 10px 20px;">تسجيل خروج</button>
+            </div>
+        </div>
+
+        <div class="nav-tabs" id="navTabs">
+            <button class="nav-tab active" onclick="showTab('cashier')">💰 الكاشير</button>
+            <button class="nav-tab" onclick="showTab('inventory')">📦 المخزون</button>
+            <button class="nav-tab" onclick="showTab('expenses')" id="expensesTab">📤 المصروفات</button>
+            <button class="nav-tab" onclick="showTab('employees')" id="employeesTab">👥 الموظفين</button>
+            <button class="nav-tab" onclick="showTab('reports')">📊 التقارير</button>
+            <button class="nav-tab" onclick="showTab('settings')" id="settingsTab">⚙️ الإعدادات</button>
+        </div>
+
+        <!-- Cashier -->
+        <div id="cashier" class="content-section active">
+            <div class="card">
+                <div class="card-header">اختر الطاولة (اسحب ← →)</div>
+                <div class="tables-slider" id="tablesGrid"></div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">المنيو</div>
+                    <div class="grid grid-3" id="menuGrid"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">الطلب - <span id="currentTable">اختر طاولة</span></div>
+                    <div id="orderItems"></div>
+                    <div class="total-section">
+                        <div class="total-row">
+                            <span>المجموع:</span>
+                            <span id="subtotal">0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <span>الضريبة:</span>
+                            <span id="tax">0.00</span>
+                        </div>
+                        <div class="total-row total-final">
+                            <span>الإجمالي:</span>
+                            <span id="total">0.00</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" style="width: 100%; margin-top: 20px; font-size: 1.2em;" onclick="completeSale()">
+                        ✓ إتمام البيع وطباعة
+                    </button>
+                    <button class="btn btn-danger" style="width: 100%; margin-top: 10px;" onclick="clearOrder()">
+                        ✕ إلغاء الطلب
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory -->
+        <div id="inventory" class="content-section">
+            <div class="card" id="inventoryManagement">
+                <div class="card-header">إضافة صنف جديد</div>
+                <div class="grid grid-3">
+                    <div class="form-group">
+                        <label>اسم الصنف</label>
+                        <input type="text" class="form-control" id="newItemName">
+                    </div>
+                    <div class="form-group">
+                        <label>السعر</label>
+                        <input type="number" class="form-control" id="newItemPrice">
+                    </div>
+                    <div class="form-group">
+                        <label>الكمية</label>
+                        <input type="number" class="form-control" id="newItemStock">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="addItem()">➕ إضافة صنف</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">قائمة الأصناف</div>
+                <table id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th>الصنف</th>
+                            <th>السعر</th>
+                            <th>الكمية</th>
+                            <th id="inventoryActionsHeader">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Expenses -->
+        <div id="expenses" class="content-section">
+            <div class="card">
+                <div class="card-header">إضافة مصروف</div>
+                <div class="grid grid-3">
+                    <div class="form-group">
+                        <label>نوع المصروف</label>
+                        <input type="text" class="form-control" id="expenseType">
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ</label>
+                        <input type="number" class="form-control" id="expenseAmount">
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظات</label>
+                        <input type="text" class="form-control" id="expenseNotes">
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="addExpense()">➕ إضافة مصروف</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">سجل المصروفات</div>
+                <table id="expensesTable">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>النوع</th>
+                            <th>المبلغ</th>
+                            <th>ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Employees -->
+        <div id="employees" class="content-section">
+            <div class="card">
+                <div class="card-header">إضافة موظف</div>
+                <div class="grid grid-3">
+                    <div class="form-group">
+                        <label>اسم الموظف</label>
+                        <input type="text" class="form-control" id="empName">
+                    </div>
+                    <div class="form-group">
+                        <label>الوظيفة</label>
+                        <select class="form-control" id="empPosition">
+                            <option>كاشير</option>
+                            <option>باريستا</option>
+                            <option>ويتر</option>
+                            <option>طباخ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>المرتب</label>
+                        <input type="number" class="form-control" id="empSalary">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور</label>
+                        <input type="password" class="form-control" id="empPasswordNew" placeholder="كلمة مرور الموظف">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addEmployee()">➕ إضافة موظف</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">قائمة الموظفين</div>
+                <div id="employeesContainer" style="margin-bottom: 20px;"></div>
+                <table id="employeesTable">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الوظيفة</th>
+                            <th>المرتب</th>
+                            <th>تاريخ التعيين</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reports -->
+        <div id="reports" class="content-section">
+            <div class="card">
+                <div class="card-header">تقرير المبيعات</div>
+                <div id="financialStats" class="grid grid-3" style="margin-bottom: 30px;">
+                    <div style="background: var(--success); color: white; padding: 30px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: 900;" id="reportSales">0.00</div>
+                        <div style="margin-top: 10px;">إجمالي المبيعات</div>
+                    </div>
+                    <div style="background: var(--danger); color: white; padding: 30px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: 900;" id="reportExpenses">0.00</div>
+                        <div style="margin-top: 10px;">إجمالي المصروفات</div>
+                    </div>
+                    <div style="background: var(--primary); color: white; padding: 30px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2em; font-weight: 900;" id="reportProfit">0.00</div>
+                        <div style="margin-top: 10px;">صافي الربح</div>
+                    </div>
+                </div>
+
+                <table id="salesTable">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الطاولة</th>
+                            <th>الكاشير</th>
+                            <th>المبلغ</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- Daily Reports -->
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">📅 التقارير اليومية</div>
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">اختر التاريخ:</label>
+                    <input type="date" id="dailyReportDate" class="form-control" style="max-width: 300px;">
+                    <button class="btn btn-primary" onclick="generateDailyReport()" style="margin-top: 10px;">عرض التقرير</button>
+                    <button class="btn btn-success" onclick="generateTodayReport()" style="margin-top: 10px; margin-right: 10px;">تقرير اليوم</button>
+                </div>
+                
+                <div id="dailyReportContainer" style="display: none;">
+                    <div id="dailyReportStats" class="grid grid-3" style="margin-bottom: 30px;"></div>
+                    <table id="dailyReportTable">
+                        <thead>
+                            <tr>
+                                <th>الوقت</th>
+                                <th>الطاولة</th>
+                                <th>الكاشير</th>
+                                <th>المبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settings" class="content-section">
+            <div class="card">
+                <div class="card-header">إعدادات الكافيه</div>
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label>اسم الكافيه</label>
+                        <input type="text" class="form-control" id="cafeName" value="كافيه النجاح">
+                    </div>
+                    <div class="form-group">
+                        <label>رقم التليفون</label>
+                        <input type="text" class="form-control" id="cafePhone" value="01000000000">
+                    </div>
+                    <div class="form-group">
+                        <label>العنوان</label>
+                        <input type="text" class="form-control" id="cafeAddress" value="القاهرة، مصر">
+                    </div>
+                    <div class="form-group">
+                        <label>نسبة الضريبة (%)</label>
+                        <input type="number" class="form-control" id="taxRate" value="10">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">🔐 إدارة كلمات المرور</div>
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label>كلمة مرور المدير</label>
+                        <input type="password" class="form-control" id="adminPassword" placeholder="الافتراضية: 1234">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة مرور الموظفين</label>
+                        <input type="password" class="form-control" id="employeePassword" placeholder="الافتراضية: 1234">
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="savePasswords()">🔑 تحديث كلمات المرور</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">إدارة البيانات</div>
+                <button class="btn btn-danger" onclick="resetData()">🗑️ مسح جميع البيانات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Modal -->
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeInvoice()">×</span>
+            <div id="invoiceContent"></div>
+            <button class="btn btn-success" style="width: 100%; margin-top: 20px;" onclick="window.print()">
+                🖨️ طباعة الفاتورة
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        let data = {
+            tables: [],
+            menu: [],
+            sales: [],
+            expenses: [],
+            employees: [],
+            settings: {
+                cafeName: 'كافيه النجاح',
+                cafePhone: '01000000000',
+                cafeAddress: 'القاهرة، مصر',
+                taxRate: 10,
+                adminPassword: '1234',
+                employeePassword: '1234'
+            },
+            currentOrder: { table: null, items: [] },
+            currentUser: null,
+            tableOrders: {} // Store ongoing orders for occupied tables
+        };
+
+        // Initialize
+        function init() {
+            console.log('Initializing...');
+            
+            // Load data
+            const saved = localStorage.getItem('cafeData');
+            if (saved) {
+                const loadedData = JSON.parse(saved);
+                // Merge loaded data with default structure to ensure settings exist
+                data = {
+                    tables: loadedData.tables || [],
+                    menu: loadedData.menu || [],
+                    sales: loadedData.sales || [],
+                    expenses: loadedData.expenses || [],
+                    employees: loadedData.employees || [],
+                    settings: {
+                        cafeName: loadedData.settings?.cafeName || 'كافيه النجاح',
+                        cafePhone: loadedData.settings?.cafePhone || '01000000000',
+                        cafeAddress: loadedData.settings?.cafeAddress || 'القاهرة، مصر',
+                        taxRate: loadedData.settings?.taxRate || 10,
+                        adminPassword: loadedData.settings?.adminPassword || '1234',
+                        employeePassword: loadedData.settings?.employeePassword || '1234'
+                    },
+                    currentOrder: loadedData.currentOrder || { table: null, items: [] },
+                    currentUser: loadedData.currentUser || null,
+                    tableOrders: loadedData.tableOrders || {} // Load ongoing orders
+                };
+                console.log('Data loaded', data.settings);
+            } else {
+                // Initialize default data
+                for (let i = 1; i <= 20; i++) {
+                    data.tables.push({ id: i, name: `طاولة ${i}`, status: 'available' });
+                }
+                
+                const defaultMenu = [
+                    { id: 1, name: 'قهوة تركي', price: 25, stock: 100 },
+                    { id: 2, name: 'قهوة فرنساوي', price: 30, stock: 100 },
+                    { id: 3, name: 'كابتشينو', price: 35, stock: 100 },
+                    { id: 4, name: 'لاتيه', price: 35, stock: 100 },
+                    { id: 5, name: 'إسبريسو', price: 20, stock: 100 },
+                    { id: 6, name: 'شاي', price: 15, stock: 100 },
+                    { id: 7, name: 'عصير برتقال', price: 25, stock: 50 },
+                    { id: 8, name: 'عصير مانجو', price: 30, stock: 50 },
+                    { id: 9, name: 'كريب نوتيلا', price: 40, stock: 30 },
+                    { id: 10, name: 'كيك شوكولاتة', price: 35, stock: 20 }
+                ];
+                data.menu = defaultMenu;
+                console.log('Default data initialized');
+                saveData(); // Save initial data
+            }
+
+            // Check login
+            if (!data.currentUser) {
+                showLoginScreen();
+                return;
+            }
+
+            renderTables();
+            renderMenu();
+            renderInventory();
+            renderExpenses();
+            renderEmployees();
+            updateReports();
+            updateCash();
+            updateUserDisplay();
+            applyRoleRestrictions();
+            
+            console.log('Init complete!');
+        }
+
+        function saveData() {
+            localStorage.setItem('cafeData', JSON.stringify(data));
+        }
+
+        // Login System
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainContainer').style.display = 'none';
+        }
+
+        function hideLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+        }
+
+        document.getElementById('loginUser').addEventListener('change', function() {
+            const empGroup = document.getElementById('employeeSelectGroup');
+            if (this.value === 'employee') {
+                empGroup.style.display = 'block';
+                loadEmployeesForLogin();
+            } else {
+                empGroup.style.display = 'none';
+            }
+        });
+
+        function loadEmployeesForLogin() {
+            const select = document.getElementById('employeeSelect');
+            select.innerHTML = '<option value="">-- اختر الموظف --</option>' + 
+                data.employees.map(emp => `<option value="${emp.id}">${emp.name} - ${emp.position}</option>`).join('');
+        }
+
+        function performLogin() {
+            const userType = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPassword').value;
+
+            console.log('Login attempt:', { userType, password });
+            console.log('Settings:', data.settings);
+            console.log('Admin password:', data.settings.adminPassword);
+
+            if (!userType) {
+                alert('⚠️ اختر نوع المستخدم');
+                return;
+            }
+
+            if (!password) {
+                alert('⚠️ أدخل كلمة المرور');
+                return;
+            }
+
+            if (userType === 'admin') {
+                console.log('Checking admin password:', password, '===', data.settings.adminPassword);
+                if (password === data.settings.adminPassword) {
+                    data.currentUser = { type: 'admin', name: 'المدير' };
+                    completeLogin();
+                } else {
+                    alert('❌ كلمة المرور خاطئة\nكلمة المرور الافتراضية هي: 1234');
+                }
+            } else if (userType === 'employee') {
+                const empId = document.getElementById('employeeSelect').value;
+                if (!empId) {
+                    alert('⚠️ اختر الموظف أولاً\n(لازم تضيف موظفين من حساب المدير الأول)');
+                    return;
+                }
+
+                const employee = data.employees.find(e => e.id == empId);
+                
+                // Check individual employee password
+                const employeePassword = employee.password || '1234'; // Default if no password set
+                console.log('Checking employee password:', password, '===', employeePassword);
+                
+                if (password === employeePassword) {
+                    data.currentUser = {
+                        type: 'employee',
+                        name: employee.name,
+                        id: employee.id,
+                        position: employee.position
+                    };
+                    completeLogin();
+                } else {
+                    alert('❌ كلمة المرور خاطئة');
+                }
+            }
+        }
+
+        function completeLogin() {
+            hideLoginScreen();
+            saveData();
+            renderTables();
+            renderMenu();
+            renderInventory();
+            renderExpenses();
+            renderEmployees();
+            updateReports();
+            updateCash();
+            updateUserDisplay();
+            applyRoleRestrictions();
+        }
+
+        function updateUserDisplay() {
+            const display = document.getElementById('userDisplay');
+            if (data.currentUser) {
+                display.textContent = data.currentUser.type === 'admin' ? 
+                    '👨‍💼 ' + data.currentUser.name : 
+                    '👨‍🍳 ' + data.currentUser.name;
+            }
+        }
+
+        function logout() {
+            if (confirm('تسجيل الخروج؟')) {
+                data.currentUser = null;
+                saveData();
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginUser').value = '';
+                showLoginScreen();
+            }
+        }
+
+        function applyRoleRestrictions() {
+            if (data.currentUser && data.currentUser.type === 'employee') {
+                // Hide tabs that employees shouldn't access
+                document.getElementById('expensesTab').style.display = 'none';
+                document.getElementById('employeesTab').style.display = 'none';
+                document.getElementById('settingsTab').style.display = 'none';
+                
+                // Hide cash display in header
+                document.getElementById('totalCash').textContent = '***';
+                
+                // Hide financial statistics in reports (but keep the reports tab visible)
+                const financialStats = document.getElementById('financialStats');
+                if (financialStats) {
+                    financialStats.style.display = 'none';
+                }
+                
+                // Hide inventory management (adding/editing items)
+                const inventoryManagement = document.getElementById('inventoryManagement');
+                if (inventoryManagement) {
+                    inventoryManagement.style.display = 'none';
+                }
+                
+                // Hide actions column header in inventory
+                const actionsHeader = document.getElementById('inventoryActionsHeader');
+                if (actionsHeader) {
+                    actionsHeader.style.display = 'none';
+                }
+            } else {
+                // Show all tabs for admin
+                document.getElementById('expensesTab').style.display = 'block';
+                document.getElementById('employeesTab').style.display = 'block';
+                document.getElementById('settingsTab').style.display = 'block';
+                
+                // Show financial statistics
+                const financialStats = document.getElementById('financialStats');
+                if (financialStats) {
+                    financialStats.style.display = 'grid';
+                }
+                
+                // Show inventory management
+                const inventoryManagement = document.getElementById('inventoryManagement');
+                if (inventoryManagement) {
+                    inventoryManagement.style.display = 'block';
+                }
+                
+                // Show actions column header in inventory
+                const actionsHeader = document.getElementById('inventoryActionsHeader');
+                if (actionsHeader) {
+                    actionsHeader.style.display = 'table-cell';
+                }
+            }
+        }
+
+        // Tables
+        function renderTables() {
+            const grid = document.getElementById('tablesGrid');
+            grid.innerHTML = data.tables.map(t => `
+                <div class="table-item ${data.currentOrder.table === t.id ? 'selected' : ''} ${t.status === 'occupied' && data.currentOrder.table !== t.id ? 'occupied' : ''}" onclick="selectTable(${t.id})">
+                    <div class="item-name">${t.name}</div>
+                    <span class="table-status status-${t.status}">
+                        ${t.status === 'available' ? '✓ متاحة' : '✕ مشغولة'}
+                    </span>
+                    ${t.status === 'occupied' && data.currentOrder.table !== t.id ? `
+                        <button class="btn btn-warning" style="padding: 8px 12px; font-size: 0.9em; margin-top: 5px; width: 100%;" onclick="event.stopPropagation(); addToOccupiedTable(${t.id})">
+                            ➕ إضافة طلب
+                        </button>
+                        <button class="btn btn-success" style="padding: 8px 12px; font-size: 0.9em; margin-top: 5px; width: 100%;" onclick="event.stopPropagation(); releaseTable(${t.id})">
+                            تحرير الطاولة
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function selectTable(id) {
+            const table = data.tables.find(t => t.id === id);
+            
+            // Check if table is occupied (and not already selected for adding items)
+            if (table.status === 'occupied' && data.currentOrder.table !== id) {
+                // Don't show alert - user should use the "Add Order" button
+                return;
+            }
+            
+            data.currentOrder.table = id;
+            document.getElementById('currentTable').textContent = table.name;
+            renderTables();
+        }
+        
+        function addToOccupiedTable(tableId) {
+            if (data.currentOrder.items.length > 0 && data.currentOrder.table !== tableId) {
+                if (!confirm('لديك طلب حالي غير مكتمل. هل تريد إلغائه والانتقال لهذه الطاولة؟')) {
+                    return;
+                }
+            }
+            
+            const table = data.tables.find(t => t.id === tableId);
+            data.currentOrder.table = tableId;
+            data.currentOrder.items = []; // Start fresh for new addition
+            
+            document.getElementById('currentTable').textContent = table.name + ' (إضافة طلب)';
+            
+            // Show previous order info if exists
+            if (data.tableOrders[tableId]) {
+                const prevTotal = data.tableOrders[tableId].total || 0;
+                alert(`💰 المبلغ السابق: ${prevTotal.toFixed(2)} ج\nأضف الطلب الجديد وسيتم حساب المجموع الكلي`);
+            }
+            
+            renderTables();
+            renderOrder();
+            renderMenu();
+        }
+        
+        function releaseTable(tableId) {
+            const table = data.tables.find(t => t.id === tableId);
+            const tableOrder = data.tableOrders[tableId];
+            
+            if (!tableOrder || tableOrder.total === 0) {
+                // No orders on this table, just release it
+                table.status = 'available';
+                delete data.tableOrders[tableId];
+                saveData();
+                renderTables();
+                return;
+            }
+            
+            // Show confirmation with total
+            if (confirm(`هل انتهى الزباين من هذه الطاولة؟\n\nالمبلغ الإجمالي: ${tableOrder.total.toFixed(2)} ج`)) {
+                // Record final sale
+                const finalSale = {
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    table: table.name,
+                    items: tableOrder.items,
+                    subtotal: tableOrder.subtotal,
+                    tax: tableOrder.tax,
+                    total: tableOrder.total,
+                    employee: data.currentUser ? data.currentUser.name : 'غير معروف'
+                };
+                
+                data.sales.push(finalSale);
+                
+                // Release table
+                table.status = 'available';
+                delete data.tableOrders[tableId];
+                
+                // If this was the current selected table, clear it
+                if (data.currentOrder.table === tableId) {
+                    data.currentOrder.table = null;
+                    data.currentOrder.items = [];
+                    document.getElementById('currentTable').textContent = 'اختر طاولة';
+                    renderOrder();
+                }
+                
+                saveData();
+                renderTables();
+                updateCash();
+                updateReports();
+                
+                alert(`✅ تم تحرير الطاولة\n💰 المبلغ النهائي: ${tableOrder.total.toFixed(2)} ج`);
+            }
+        }
+
+        // Menu
+        function renderMenu() {
+            const grid = document.getElementById('menuGrid');
+            grid.innerHTML = data.menu.map(item => {
+                const inOrder = data.currentOrder.items.find(i => i.id === item.id);
+                const isSelected = inOrder ? 'selected' : '';
+                return `
+                <div class="menu-item ${isSelected}" onclick="addToOrder(${item.id})">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">${item.price.toFixed(2)} ج</div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">متوفر: ${item.stock}</div>
+                    ${inOrder ? `<div style="color: white; font-weight: 700; margin-top: 5px; background: rgba(255,255,255,0.2); padding: 5px; border-radius: 5px;">✓ في الطلب (${inOrder.quantity})</div>` : ''}
+                </div>
+            `;
+            }).join('');
+        }
+
+        function addToOrder(itemId) {
+            if (!data.currentOrder.table) {
+                alert('⚠️ اختر طاولة أولاً');
+                return;
+            }
+
+            const item = data.menu.find(m => m.id === itemId);
+            if (item.stock <= 0) {
+                alert('⚠️ الصنف غير متاح');
+                return;
+            }
+
+            const existing = data.currentOrder.items.find(i => i.id === itemId);
+            if (existing) {
+                if (existing.quantity >= item.stock) {
+                    alert(`⚠️ الكمية المتاحة فقط ${item.stock}`);
+                    return;
+                }
+                existing.quantity++;
+            } else {
+                data.currentOrder.items.push({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: 1
+                });
+            }
+
+            renderOrder();
+            renderMenu(); // Refresh menu to show selected state
+        }
+
+        function renderOrder() {
+            const container = document.getElementById('orderItems');
+            
+            if (data.currentOrder.items.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🛒</div><div>الطلب فارغ</div></div>';
+                updateTotals();
+                return;
+            }
+
+            container.innerHTML = data.currentOrder.items.map(item => `
+                <div class="order-item">
+                    <div>
+                        <div style="font-weight: 700; margin-bottom: 5px;">${item.name}</div>
+                        <div>${item.price.toFixed(2)} × ${item.quantity} = ${(item.price * item.quantity).toFixed(2)} ج</div>
+                    </div>
+                    <div class="order-item-controls">
+                        <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
+                        <span class="qty-display">${item.quantity}</span>
+                        <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+                        <button class="delete-btn" onclick="removeItem(${item.id})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+
+            updateTotals();
+        }
+
+        function changeQty(id, delta) {
+            const item = data.currentOrder.items.find(i => i.id === id);
+            const menuItem = data.menu.find(m => m.id === id);
+            
+            if (item) {
+                const newQty = item.quantity + delta;
+                if (newQty <= 0) {
+                    removeItem(id);
+                } else if (newQty > menuItem.stock) {
+                    alert(`⚠️ الكمية المتاحة فقط ${menuItem.stock}`);
+                } else {
+                    item.quantity = newQty;
+                    renderOrder();
+                    renderMenu(); // Refresh menu to update selected state
+                }
+            }
+        }
+
+        function removeItem(id) {
+            data.currentOrder.items = data.currentOrder.items.filter(i => i.id !== id);
+            renderOrder();
+            renderMenu(); // Refresh menu to remove selected state
+        }
+
+        function updateTotals() {
+            const subtotal = data.currentOrder.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            const tax = subtotal * (data.settings.taxRate / 100);
+            const total = subtotal + tax;
+
+            document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+            document.getElementById('tax').textContent = tax.toFixed(2);
+            document.getElementById('total').textContent = total.toFixed(2);
+        }
+
+        function clearOrder() {
+            if (confirm('إلغاء الطلب؟')) {
+                data.currentOrder.items = [];
+                renderOrder();
+            }
+        }
+
+        function completeSale() {
+            if (!data.currentOrder.table || data.currentOrder.items.length === 0) {
+                alert('⚠️ الطلب فارغ');
+                return;
+            }
+
+            const tableId = data.currentOrder.table;
+            const table = data.tables.find(t => t.id === tableId);
+            
+            // Calculate current order totals
+            const currentSubtotal = data.currentOrder.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            const currentTax = currentSubtotal * (data.settings.taxRate / 100);
+            const currentTotal = currentSubtotal + currentTax;
+            
+            // Get previous order total if exists
+            const previousTotal = data.tableOrders[tableId]?.total || 0;
+            const previousSubtotal = data.tableOrders[tableId]?.subtotal || 0;
+            const previousTax = data.tableOrders[tableId]?.tax || 0;
+            
+            // Calculate accumulated totals
+            const accumulatedSubtotal = previousSubtotal + currentSubtotal;
+            const accumulatedTax = previousTax + currentTax;
+            const accumulatedTotal = previousTotal + currentTotal;
+            
+            // Combine items (previous + current)
+            const previousItems = data.tableOrders[tableId]?.items || [];
+            const allItems = [...previousItems, ...data.currentOrder.items];
+
+            const sale = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                table: table.name,
+                items: allItems,
+                subtotal: accumulatedSubtotal,
+                tax: accumulatedTax,
+                total: accumulatedTotal,
+                employee: data.currentUser ? data.currentUser.name : 'غير معروف',
+                isAccumulated: previousTotal > 0 // Flag to show this is accumulated
+            };
+
+            // Update stock for current order only
+            data.currentOrder.items.forEach(orderItem => {
+                const menuItem = data.menu.find(m => m.id === orderItem.id);
+                if (menuItem) menuItem.stock -= orderItem.quantity;
+            });
+            
+            // Check if this is adding to existing order
+            if (table.status === 'occupied' && previousTotal > 0) {
+                // Store accumulated order temporarily
+                data.tableOrders[tableId] = {
+                    items: allItems,
+                    subtotal: accumulatedSubtotal,
+                    tax: accumulatedTax,
+                    total: accumulatedTotal
+                };
+                
+                saveData();
+                
+                // Show accumulated invoice
+                showAccumulatedInvoice(sale, currentTotal, previousTotal);
+                
+                data.currentOrder = { table: null, items: [] };
+                document.getElementById('currentTable').textContent = 'اختر طاولة';
+                renderOrder();
+                renderTables();
+                renderMenu();
+            } else {
+                // First order - just mark as occupied and store
+                table.status = 'occupied';
+                
+                data.tableOrders[tableId] = {
+                    items: allItems,
+                    subtotal: accumulatedSubtotal,
+                    tax: accumulatedTax,
+                    total: accumulatedTotal
+                };
+                
+                // Add to sales (but don't finalize yet)
+                saveData();
+                showInvoice(sale);
+                
+                data.currentOrder = { table: null, items: [] };
+                document.getElementById('currentTable').textContent = 'اختر طاولة';
+                renderOrder();
+                renderTables();
+                renderMenu();
+            }
+            
+            updateCash();
+            updateReports();
+        }
+
+        function showInvoice(sale) {
+            const content = document.getElementById('invoiceContent');
+            content.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #333; padding-bottom: 15px;">
+                    <h2>${data.settings.cafeName}</h2>
+                    <p>${data.settings.cafeAddress}</p>
+                    <p>${data.settings.cafePhone}</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <p><strong>رقم الفاتورة:</strong> ${sale.id}</p>
+                    <p><strong>التاريخ:</strong> ${new Date(sale.date).toLocaleString('ar-EG')}</p>
+                    <p><strong>الطاولة:</strong> ${sale.table}</p>
+                    <p><strong>الكاشير:</strong> ${sale.employee}</p>
+                </div>
+                <table style="width: 100%; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #333;">
+                            <th style="padding: 10px; text-align: right;">الصنف</th>
+                            <th style="padding: 10px; text-align: center;">الكمية</th>
+                            <th style="padding: 10px; text-align: center;">السعر</th>
+                            <th style="padding: 10px; text-align: left;">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sale.items.map(i => `
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">${i.name}</td>
+                                <td style="padding: 8px; text-align: center;">${i.quantity}</td>
+                                <td style="padding: 8px; text-align: center;">${i.price.toFixed(2)}</td>
+                                <td style="padding: 8px; text-align: left; font-weight: 700;">${(i.price * i.quantity).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div style="text-align: left; font-size: 1.1em; border-top: 2px dashed #333; padding-top: 15px;">
+                    <p style="margin: 5px 0;"><strong>المجموع:</strong> ${sale.subtotal.toFixed(2)} ج</p>
+                    <p style="margin: 5px 0;"><strong>الضريبة (${data.settings.taxRate}%):</strong> ${sale.tax.toFixed(2)} ج</p>
+                    <p style="font-size: 1.4em; margin: 15px 0 5px 0; font-weight: 900;"><strong>الإجمالي:</strong> ${sale.total.toFixed(2)} ج</p>
+                </div>
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px dashed #ccc;">
+                    <p style="font-weight: 700;">شكراً لزيارتكم ❤️</p>
+                    <p>نتمنى رؤيتكم مرة أخرى</p>
+                </div>
+            `;
+            document.getElementById('invoiceModal').classList.add('active');
+        }
+
+        function closeInvoice() {
+            document.getElementById('invoiceModal').classList.remove('active');
+        }
+
+        function showAccumulatedInvoice(sale, currentTotal, previousTotal) {
+            const content = document.getElementById('invoiceContent');
+            content.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #333; padding-bottom: 15px;">
+                    <h2>${data.settings.cafeName}</h2>
+                    <p>${data.settings.cafeAddress}</p>
+                    <p>${data.settings.cafePhone}</p>
+                </div>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="color: #856404; margin: 0;">📋 فاتورة مجمعة</h3>
+                    <p style="margin: 5px 0; color: #856404;">تم إضافة طلب جديد على الطاولة</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <p><strong>رقم الفاتورة:</strong> ${sale.id}</p>
+                    <p><strong>التاريخ:</strong> ${new Date(sale.date).toLocaleString('ar-EG')}</p>
+                    <p><strong>الطاولة:</strong> ${sale.table}</p>
+                    <p><strong>الكاشير:</strong> ${sale.employee}</p>
+                </div>
+                
+                <div style="background: #d1ecf1; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #0c5460;">المبلغ السابق</h4>
+                    <p style="font-size: 1.3em; font-weight: 700; margin: 0; color: #0c5460;">${previousTotal.toFixed(2)} ج</p>
+                </div>
+                
+                <div style="background: #d4edda; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #155724;">الطلب الجديد</h4>
+                    <p style="font-size: 1.3em; font-weight: 700; margin: 0; color: #155724;">${currentTotal.toFixed(2)} ج</p>
+                </div>
+                
+                <table style="width: 100%; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #333;">
+                            <th style="padding: 10px; text-align: right;">الصنف</th>
+                            <th style="padding: 10px; text-align: center;">الكمية</th>
+                            <th style="padding: 10px; text-align: center;">السعر</th>
+                            <th style="padding: 10px; text-align: left;">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sale.items.map(i => `
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">${i.name}</td>
+                                <td style="padding: 8px; text-align: center;">${i.quantity}</td>
+                                <td style="padding: 8px; text-align: center;">${i.price.toFixed(2)}</td>
+                                <td style="padding: 8px; text-align: left; font-weight: 700;">${(i.price * i.quantity).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div style="text-align: left; font-size: 1.1em; border-top: 2px dashed #333; padding-top: 15px;">
+                    <p style="margin: 5px 0;"><strong>المجموع:</strong> ${sale.subtotal.toFixed(2)} ج</p>
+                    <p style="margin: 5px 0;"><strong>الضريبة (${data.settings.taxRate}%):</strong> ${sale.tax.toFixed(2)} ج</p>
+                    <p style="font-size: 1.6em; margin: 15px 0 5px 0; font-weight: 900; color: var(--primary);"><strong>المجموع الكلي:</strong> ${sale.total.toFixed(2)} ج</p>
+                </div>
+                <div style="text-align: center; margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 10px;">
+                    <p style="font-weight: 700; margin: 0; color: #856404;">⚠️ الطاولة لا تزال مشغولة</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #856404;">استخدم "تحرير الطاولة" عند انتهاء الزباين</p>
+                </div>
+            `;
+            document.getElementById('invoiceModal').classList.add('active');
+        }
+
+        // Inventory
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryTable').querySelector('tbody');
+            if (!tbody) {
+                console.error('Inventory table body not found');
+                return;
+            }
+            
+            if (data.menu.length === 0) {
+                const colSpan = (data.currentUser && data.currentUser.type === 'employee') ? 3 : 4;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align: center; padding: 20px; color: #999;">لا توجد أصناف في المخزون</td></tr>`;
+                return;
+            }
+            
+            const isEmployee = data.currentUser && data.currentUser.type === 'employee';
+            
+            tbody.innerHTML = data.menu.map(item => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td style="color: var(--success); font-weight: 700;">${item.price.toFixed(2)} ج</td>
+                    <td>${item.stock}</td>
+                    ${isEmployee ? '' : `
+                    <td>
+                        <button class="btn btn-warning" style="padding: 5px 15px; font-size: 0.9em;" onclick="updateStock(${item.id})">تحديث</button>
+                        <button class="btn btn-danger" style="padding: 5px 15px; font-size: 0.9em;" onclick="deleteItem(${item.id})">حذف</button>
+                    </td>
+                    `}
+                </tr>
+            `).join('');
+        }
+
+        function addItem() {
+            const name = document.getElementById('newItemName').value.trim();
+            const price = parseFloat(document.getElementById('newItemPrice').value);
+            const stock = parseInt(document.getElementById('newItemStock').value);
+
+            console.log('Adding item:', { name, price, stock }); // Debug
+
+            if (!name) {
+                alert('⚠️ أدخل اسم الصنف');
+                return;
+            }
+
+            if (!price || price <= 0) {
+                alert('⚠️ أدخل سعر صحيح');
+                return;
+            }
+
+            if (!stock || stock < 0) {
+                alert('⚠️ أدخل كمية صحيحة');
+                return;
+            }
+
+            data.menu.push({
+                id: Date.now(),
+                name: name,
+                price: price,
+                stock: stock
+            });
+
+            console.log('Item added to menu:', data.menu); // Debug
+            saveData();
+            renderMenu();
+            renderInventory();
+
+            document.getElementById('newItemName').value = '';
+            document.getElementById('newItemPrice').value = '';
+            document.getElementById('newItemStock').value = '';
+
+            alert('✅ تم إضافة الصنف بنجاح');
+        }
+
+        function updateStock(id) {
+            const item = data.menu.find(m => m.id === id);
+            const newStock = prompt(`تحديث كمية ${item.name}\nالكمية الحالية: ${item.stock}`, item.stock);
+            
+            if (newStock !== null) {
+                const stock = parseInt(newStock);
+                if (!isNaN(stock) && stock >= 0) {
+                    item.stock = stock;
+                    saveData();
+                    renderMenu();
+                    renderInventory();
+                }
+            }
+        }
+
+        function deleteItem(id) {
+            if (confirm('حذف هذا الصنف؟')) {
+                data.menu = data.menu.filter(m => m.id !== id);
+                saveData();
+                renderMenu();
+                renderInventory();
+            }
+        }
+
+        // Expenses
+        function renderExpenses() {
+            const tbody = document.getElementById('expensesTable').querySelector('tbody');
+            if (data.expenses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا توجد مصروفات</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.expenses.slice().reverse().map(e => `
+                <tr>
+                    <td>${new Date(e.date).toLocaleDateString('ar-EG')}</td>
+                    <td>${e.type}</td>
+                    <td style="color: var(--danger); font-weight: 700;">${e.amount.toFixed(2)} ج</td>
+                    <td>${e.notes || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function addExpense() {
+            const type = document.getElementById('expenseType').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const notes = document.getElementById('expenseNotes').value;
+
+            if (!type || !amount) {
+                alert('⚠️ أدخل البيانات');
+                return;
+            }
+
+            data.expenses.push({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                type, amount, notes
+            });
+
+            saveData();
+            renderExpenses();
+            updateCash();
+            updateReports();
+
+            document.getElementById('expenseType').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseNotes').value = '';
+
+            alert('✅ تم إضافة المصروف');
+        }
+
+        // Employees
+        function renderEmployees() {
+            const container = document.getElementById('employeesContainer');
+            if (!container) return; // Fallback for old HTML structure
+            
+            if (data.employees.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">لا يوجد موظفين</p>';
+                return;
+            }
+            
+            container.innerHTML = data.employees.map(e => `
+                <div style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 2px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                        <div>
+                            <h3 style="color: var(--primary); margin-bottom: 10px;">👤 ${e.name}</h3>
+                            <p style="margin: 5px 0;"><strong>المنصب:</strong> ${e.position}</p>
+                            <p style="margin: 5px 0; color: var(--success); font-weight: 700;"><strong>الراتب:</strong> ${e.salary.toFixed(2)} ج</p>
+                            <p style="margin: 5px 0; color: #666; font-size: 0.9em;"><strong>تاريخ التعيين:</strong> ${new Date(e.hireDate).toLocaleDateString('ar-EG')}</p>
+                        </div>
+                        <button class="btn btn-danger" style="padding: 10px 20px;" onclick="deleteEmployee(${e.id})">حذف</button>
+                    </div>
+                    <div style="background: var(--light); padding: 15px; border-radius: 10px;">
+                        <strong style="color: var(--primary); display: block; margin-bottom: 10px;">🔐 تغيير كلمة المرور:</strong>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="password" id="empPass_${e.id}" class="form-input" placeholder="كلمة المرور الجديدة" style="flex: 1;">
+                            <button class="btn btn-success" style="padding: 10px 20px;" onclick="updateEmployeePassword(${e.id})">تحديث</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Also render table if it exists
+            const tbody = document.getElementById('employeesTable')?.querySelector('tbody');
+            if (tbody) {
+                if (data.employees.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا يوجد موظفين</td></tr>';
+                } else {
+                    tbody.innerHTML = data.employees.map(e => `
+                        <tr>
+                            <td>${e.name}</td>
+                            <td>${e.position}</td>
+                            <td style="color: var(--success); font-weight: 700;">${e.salary.toFixed(2)} ج</td>
+                            <td>${new Date(e.hireDate).toLocaleDateString('ar-EG')}</td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        }
+
+        function addEmployee() {
+            const name = document.getElementById('empName').value.trim();
+            const position = document.getElementById('empPosition').value;
+            const salary = parseFloat(document.getElementById('empSalary').value);
+            const password = document.getElementById('empPasswordNew')?.value || '1234'; // Default password if field not found
+
+            if (!name || !salary) {
+                alert('⚠️ أدخل البيانات المطلوبة');
+                return;
+            }
+            
+            if (password.length < 4) {
+                alert('⚠️ كلمة المرور يجب أن تكون 4 أحرف على الأقل');
+                return;
+            }
+
+            // Check if employee already exists
+            if (data.employees.find(emp => emp.name === name)) {
+                alert('⚠️ يوجد موظف بهذا الاسم بالفعل');
+                return;
+            }
+
+            data.employees.push({
+                id: Date.now(),
+                name, 
+                position, 
+                salary,
+                password: password, // Individual password for each employee
+                hireDate: new Date().toISOString()
+            });
+
+            saveData();
+            renderEmployees();
+
+            document.getElementById('empName').value = '';
+            document.getElementById('empSalary').value = '';
+            if (document.getElementById('empPasswordNew')) {
+                document.getElementById('empPasswordNew').value = '';
+            }
+
+            alert('✅ تم إضافة الموظف');
+        }
+        
+        function updateEmployeePassword(empId) {
+            const newPassword = document.getElementById(`empPass_${empId}`).value;
+            
+            if (!newPassword) {
+                alert('⚠️ أدخل كلمة المرور الجديدة');
+                return;
+            }
+            
+            if (newPassword.length < 4) {
+                alert('⚠️ كلمة المرور يجب أن تكون 4 أحرف على الأقل');
+                return;
+            }
+            
+            const employee = data.employees.find(e => e.id === empId);
+            if (employee) {
+                employee.password = newPassword;
+                saveData();
+                document.getElementById(`empPass_${empId}`).value = '';
+                alert('✅ تم تحديث كلمة المرور');
+            }
+        }
+        
+        function deleteEmployee(empId) {
+            const employee = data.employees.find(e => e.id === empId);
+            if (confirm(`هل تريد حذف الموظف ${employee.name}؟`)) {
+                data.employees = data.employees.filter(e => e.id !== empId);
+                saveData();
+                renderEmployees();
+                alert('✅ تم حذف الموظف');
+            }
+        }
+
+        // Reports
+        function updateReports() {
+            const totalSales = data.sales.reduce((sum, s) => sum + s.total, 0);
+            const totalExpenses = data.expenses.reduce((sum, e) => sum + e.amount, 0);
+            const profit = totalSales - totalExpenses;
+
+            document.getElementById('reportSales').textContent = totalSales.toFixed(2);
+            document.getElementById('reportExpenses').textContent = totalExpenses.toFixed(2);
+            document.getElementById('reportProfit').textContent = profit.toFixed(2);
+
+            const tbody = document.getElementById('salesTable').querySelector('tbody');
+            if (data.sales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">لا توجد مبيعات</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.sales.slice().reverse().map(s => `
+                <tr>
+                    <td>${new Date(s.date).toLocaleString('ar-EG')}</td>
+                    <td>${s.table}</td>
+                    <td>${s.employee || '-'}</td>
+                    <td style="color: var(--success); font-weight: 700;">${s.total.toFixed(2)} ج</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateCash() {
+            if (data.currentUser && data.currentUser.type === 'employee') {
+                document.getElementById('totalCash').textContent = '***';
+                return;
+            }
+            const totalSales = data.sales.reduce((sum, s) => sum + s.total, 0);
+            const totalExpenses = data.expenses.reduce((sum, e) => sum + e.amount, 0);
+            document.getElementById('totalCash').textContent = (totalSales - totalExpenses).toFixed(2);
+        }
+
+        // Daily Reports
+        function generateTodayReport() {
+            const today = new Date();
+            const dateString = today.toISOString().split('T')[0];
+            document.getElementById('dailyReportDate').value = dateString;
+            generateDailyReport();
+        }
+
+        function generateDailyReport() {
+            const selectedDate = document.getElementById('dailyReportDate').value;
+            
+            if (!selectedDate) {
+                alert('⚠️ اختر تاريخ أولاً');
+                return;
+            }
+
+            // Parse the selected date
+            const reportDate = new Date(selectedDate);
+            
+            // Filter sales for the selected day
+            const dailySales = data.sales.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate.toDateString() === reportDate.toDateString();
+            });
+
+            // Filter expenses for the selected day
+            const dailyExpenses = data.expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.toDateString() === reportDate.toDateString();
+            });
+
+            // Calculate totals
+            const totalSales = dailySales.reduce((sum, s) => sum + s.total, 0);
+            const totalExpenses = dailyExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const profit = totalSales - totalExpenses;
+
+            // Show the report container
+            document.getElementById('dailyReportContainer').style.display = 'block';
+
+            // Update stats (hide for employees)
+            const statsContainer = document.getElementById('dailyReportStats');
+            if (data.currentUser && data.currentUser.type === 'employee') {
+                statsContainer.style.display = 'none';
+            } else {
+                statsContainer.style.display = 'grid';
+                statsContainer.innerHTML = `
+                    <div style="background: var(--success); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: 900;">${totalSales.toFixed(2)} ج</div>
+                        <div style="margin-top: 10px;">المبيعات</div>
+                    </div>
+                    <div style="background: var(--danger); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: 900;">${totalExpenses.toFixed(2)} ج</div>
+                        <div style="margin-top: 10px;">المصروفات</div>
+                    </div>
+                    <div style="background: var(--primary); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: 900;">${profit.toFixed(2)} ج</div>
+                        <div style="margin-top: 10px;">الربح</div>
+                    </div>
+                `;
+            }
+
+            // Update table
+            const tbody = document.getElementById('dailyReportTable').querySelector('tbody');
+            if (dailySales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">لا توجد مبيعات في هذا اليوم</td></tr>';
+            } else {
+                tbody.innerHTML = dailySales.map(sale => `
+                    <tr>
+                        <td>${new Date(sale.date).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td>${sale.table}</td>
+                        <td>${sale.employee || '-'}</td>
+                        <td style="color: var(--success); font-weight: 700;">${sale.total.toFixed(2)} ج</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Settings
+        function saveSettings() {
+            data.settings.cafeName = document.getElementById('cafeName').value;
+            data.settings.cafePhone = document.getElementById('cafePhone').value;
+            data.settings.cafeAddress = document.getElementById('cafeAddress').value;
+            data.settings.taxRate = parseFloat(document.getElementById('taxRate').value);
+            saveData();
+            alert('✅ تم حفظ الإعدادات');
+        }
+
+        function savePasswords() {
+            const adminPass = document.getElementById('adminPassword').value;
+            const empPass = document.getElementById('employeePassword').value;
+
+            if (adminPass && adminPass.length >= 4) {
+                data.settings.adminPassword = adminPass;
+            }
+
+            if (empPass && empPass.length >= 4) {
+                data.settings.employeePassword = empPass;
+            }
+
+            if (!adminPass && !empPass) {
+                alert('⚠️ أدخل كلمة مرور واحدة على الأقل');
+                return;
+            }
+
+            saveData();
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('employeePassword').value = '';
+            alert('✅ تم تحديث كلمات المرور');
+        }
+
+        function resetData() {
+            // Create a custom dialog with checkboxes
+            const dialog = document.createElement('div');
+            dialog.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000;';
+            
+            dialog.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 20px; max-width: 500px; width: 90%;">
+                    <h2 style="color: var(--danger); text-align: center; margin-bottom: 20px;">⚠️ مسح البيانات</h2>
+                    <p style="text-align: center; margin-bottom: 20px;">اختر البيانات التي تريد مسحها:</p>
+                    <div style="text-align: right;">
+                        <label style="display: block; padding: 15px; background: var(--light); margin-bottom: 10px; border-radius: 10px; cursor: pointer;">
+                            <input type="checkbox" id="resetSales" style="margin-left: 10px; width: 20px; height: 20px;">
+                            <span>مسح المبيعات</span>
+                        </label>
+                        <label style="display: block; padding: 15px; background: var(--light); margin-bottom: 10px; border-radius: 10px; cursor: pointer;">
+                            <input type="checkbox" id="resetExpenses" style="margin-left: 10px; width: 20px; height: 20px;">
+                            <span>مسح المصروفات</span>
+                        </label>
+                        <label style="display: block; padding: 15px; background: var(--light); margin-bottom: 10px; border-radius: 10px; cursor: pointer;">
+                            <input type="checkbox" id="resetInventory" style="margin-left: 10px; width: 20px; height: 20px;">
+                            <span>مسح المخزون</span>
+                        </label>
+                        <label style="display: block; padding: 15px; background: var(--light); margin-bottom: 10px; border-radius: 10px; cursor: pointer;">
+                            <input type="checkbox" id="resetEmployees" style="margin-left: 10px; width: 20px; height: 20px;">
+                            <span>مسح الموظفين</span>
+                        </label>
+                        <label style="display: block; padding: 15px; background: var(--light); margin-bottom: 10px; border-radius: 10px; cursor: pointer;">
+                            <input type="checkbox" id="resetTables" style="margin-left: 10px; width: 20px; height: 20px;">
+                            <span>إعادة تعيين الطاولات</span>
+                        </label>
+                        <label style="display: block; padding: 15px; background: #ffe6e6; margin-bottom: 20px; border-radius: 10px; cursor: pointer;">
+                            <input type="checkbox" id="resetAll" style="margin-left: 10px; width: 20px; height: 20px;">
+                            <span style="color: var(--danger); font-weight: 700;">مسح كل شيء (بما في ذلك الإعدادات)</span>
+                        </label>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button class="btn btn-danger" onclick="confirmResetData()" style="width: 100%;">تأكيد المسح</button>
+                        <button class="btn btn-primary" onclick="closeResetDialog()" style="width: 100%;">إلغاء</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            window.resetDialog = dialog;
+        }
+        
+        function closeResetDialog() {
+            if (window.resetDialog) {
+                window.resetDialog.remove();
+                window.resetDialog = null;
+            }
+        }
+        
+        function confirmResetData() {
+            const resetSales = document.getElementById('resetSales')?.checked;
+            const resetExpenses = document.getElementById('resetExpenses')?.checked;
+            const resetInventory = document.getElementById('resetInventory')?.checked;
+            const resetEmployees = document.getElementById('resetEmployees')?.checked;
+            const resetTables = document.getElementById('resetTables')?.checked;
+            const resetAll = document.getElementById('resetAll')?.checked;
+            
+            if (!resetSales && !resetExpenses && !resetInventory && !resetEmployees && !resetTables && !resetAll) {
+                alert('⚠️ اختر بيانات للمسح');
+                return;
+            }
+            
+            let confirmMsg = 'تأكيد مسح:\n';
+            if (resetAll) {
+                confirmMsg += '• كل البيانات والإعدادات\n';
+            } else {
+                if (resetSales) confirmMsg += '• المبيعات\n';
+                if (resetExpenses) confirmMsg += '• المصروفات\n';
+                if (resetInventory) confirmMsg += '• المخزون\n';
+                if (resetEmployees) confirmMsg += '• الموظفين\n';
+                if (resetTables) confirmMsg += '• الطاولات\n';
+            }
+            confirmMsg += '\nهذا الإجراء لا يمكن التراجع عنه!';
+            
+            if (!confirm(confirmMsg)) return;
+            
+            if (resetAll) {
+                localStorage.clear();
+                location.reload();
+                return;
+            }
+            
+            // Selective reset
+            if (resetSales) {
+                data.sales = [];
+            }
+            if (resetExpenses) {
+                data.expenses = [];
+            }
+            if (resetInventory) {
+                data.menu = [];
+            }
+            if (resetEmployees) {
+                data.employees = [];
+            }
+            if (resetTables) {
+                data.tables = [];
+                for (let i = 1; i <= 20; i++) {
+                    data.tables.push({ id: i, name: `طاولة ${i}`, status: 'available' });
+                }
+                data.currentOrder = { table: null, items: [] };
+            }
+            
+            saveData();
+            closeResetDialog();
+            
+            // Refresh displays
+            renderTables();
+            renderMenu();
+            renderInventory();
+            renderEmployees();
+            renderExpenses();
+            updateReports();
+            updateCash();
+            
+            alert('✅ تم مسح البيانات المحددة');
+        }
+
+        // Navigation
+        function showTab(tabName) {
+            // Check permissions
+            if (data.currentUser && data.currentUser.type === 'employee') {
+                if (tabName === 'expenses' || tabName === 'employees' || tabName === 'settings') {
+                    alert('⚠️ هذه الصفحة متاحة للمدير فقط');
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'reports') {
+                updateReports();
+                // Hide financial stats for employees
+                if (data.currentUser && data.currentUser.type === 'employee') {
+                    const financialStats = document.getElementById('financialStats');
+                    if (financialStats) {
+                        financialStats.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        // Load settings on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            
+            // Load settings to form
+            setTimeout(() => {
+                if (data.settings) {
+                    document.getElementById('cafeName').value = data.settings.cafeName;
+                    document.getElementById('cafePhone').value = data.settings.cafePhone;
+                    document.getElementById('cafeAddress').value = data.settings.cafeAddress;
+                    document.getElementById('taxRate').value = data.settings.taxRate;
+                }
+            }, 100);
+            
+            init();
+        });
+    </script>
+</body>
+</html>
